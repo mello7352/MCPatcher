@@ -42,32 +42,32 @@ bool FileExists(const string& path) {
 
 // 执行DLL注入
 bool InjectDLL(DWORD processId, const string& dllPath) {
-    cout << "[+] Opening target process..." << endl;
+    cout << "[+] 正在打开目标文件..." << endl;
 
     // 打开目标进程
     HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
     if (hProcess == NULL) {
-        cerr << "[-] Failed to open process. Error: " << GetLastError() << endl;
+        cerr << "[-] 打开进程失败: " << GetLastError() << endl;
         return false;
     }
 
-    cout << "[+] Allocating memory in target process..." << endl;
+    cout << "[+] 在目标进程分配内存..." << endl;
 
     // 在目标进程中分配内存
     SIZE_T pathLen = dllPath.length() + 1;
     LPVOID pRemotePath = VirtualAllocEx(hProcess, NULL, pathLen,
         MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (pRemotePath == NULL) {
-        cerr << "[-] Failed to allocate memory. Error: " << GetLastError() << endl;
+        cerr << "[-] 分配内存失败: " << GetLastError() << endl;
         CloseHandle(hProcess);
         return false;
     }
 
-    cout << "[+] Writing DLL path to target process..." << endl;
+    cout << "[+] 写入DLL路径..." << endl;
 
     // 写入DLL路径到目标进程
     if (!WriteProcessMemory(hProcess, pRemotePath, dllPath.c_str(), pathLen, NULL)) {
-        cerr << "[-] Failed to write memory. Error: " << GetLastError() << endl;
+        cerr << "[-] 写入内存失败: " << GetLastError() << endl;
         VirtualFreeEx(hProcess, pRemotePath, 0, MEM_RELEASE);
         CloseHandle(hProcess);
         return false;
@@ -80,13 +80,13 @@ bool InjectDLL(DWORD processId, const string& dllPath) {
     LPVOID pLoadLibrary = (LPVOID)GetProcAddress(hKernel32, "LoadLibraryA");
 
     if (pLoadLibrary == NULL) {
-        cerr << "[-] Failed to get LoadLibraryA address." << endl;
+        cerr << "[-] 获取LoadLibrary地址失败" << endl;
         VirtualFreeEx(hProcess, pRemotePath, 0, MEM_RELEASE);
         CloseHandle(hProcess);
         return false;
     }
 
-    cout << "[+] Creating remote thread..." << endl;
+    cout << "[+] 执行远程线程..." << endl;
 
     // 在目标进程中创建远程线程执行LoadLibraryA
     HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0,
@@ -99,13 +99,13 @@ bool InjectDLL(DWORD processId, const string& dllPath) {
         return false;
     }
 
-    cout << "[+] DLL injected successfully!" << endl;
-    cout << "[+] Waiting for remote thread to complete..." << endl;
+    cout << "[+] 注入成功" << endl;
+    cout << "[+] 等待线程结束..." << endl;
 
     // 等待远程线程完成
     WaitForSingleObject(hThread, INFINITE);
 
-    cout << "[+] Remote thread completed!" << endl;
+    cout << "[+] 远程进程完成!" << endl;
 
     // 清理
     CloseHandle(hThread);
@@ -127,19 +127,19 @@ bool IsNumeric(const string& str) {
 
 int main(int argc, char* argv[]) {
     cout << "========================================" << endl;
-    cout << "       DLL Injector      " << endl;
+    cout << "       DLL 注入      " << endl;
     cout << "========================================" << endl << endl;
     string target;
     string dllPath;
     bool dump = 0;
     if (argc < 2) {
-		cout << "Runtime Mem Patch Mode" << endl;
+		cout << "运行时模式" << endl;
         target = "Minecraft.Windows.exe";
         dllPath = "MCpatcher2.dll";
 		system("start purchase.html");
     }
     else {
-        cout << "Dump Game Mode" << endl;
+        cout << "复制游戏模式" << endl;
         target = "Minecraft.Windows.exe";
         dllPath = "FileCopy.dll";
         dump = 1;
@@ -147,20 +147,20 @@ int main(int argc, char* argv[]) {
     
 
     // 检查DLL文件是否存在
-    cout << "[*] Checking DLL file..." << endl;
+    cout << "[*] 检查 DLL 文件..." << endl;
     if (!FileExists(dllPath)) {
-        cerr << "[-] DLL file not found: " << dllPath << endl;
+        cerr << "[-] DLL 找不到: " << dllPath << endl;
         return 1;
     }
 
     // 获取DLL的完整路径
     char fullDllPath[MAX_PATH];
     if (!GetFullPathNameA(dllPath.c_str(), MAX_PATH, fullDllPath, NULL)) {
-        cerr << "[-] Failed to get full path of DLL." << endl;
+        cerr << "[-] 无法获取完整路径" << endl;
         return 1;
     }
 
-    cout << "[+] DLL Path: " << fullDllPath << endl << endl;
+    cout << "[+] DLL 路径: " << fullDllPath << endl << endl;
 
     // 判断目标是进程名还是PID
     DWORD processId = 0;
@@ -180,22 +180,22 @@ int main(int argc, char* argv[]) {
     if(!dump)
     if (InjectDLL(processId, fullDllPath)) {
         cout << endl << "========================================" << endl;
-        cout << "[SUCCESS] Injection completed!" << endl;
+        cout << "成功!" << endl;
         cout << "========================================" << endl;
 		return 0;
     }
     else {
         cerr << endl << "========================================" << endl;
-        cerr << "[FAILED] Injection failed!" << endl;
+        cerr << "失败!" << endl;
         cerr << "========================================" << endl;
 		return 1;
     }
     if(dump)
     if (InjectDLL(processId, fullDllPath)) {
         cout << endl << "========================================" << endl;
-        cout << "[SUCCESS] Injection completed!" << endl;
+        cout << "成功!" << endl;
         cout << "========================================" << endl;
-        cout << "Wating the target process to exit..." << endl;
+        cout << "等待进程结束" << endl;
         HANDLE hrProcess = OpenProcess(SYNCHRONIZE, FALSE, processId);
         WaitForSingleObject(hrProcess, INFINITE);
         CloseHandle(hrProcess);
@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
     }
     else {
         cerr << endl << "========================================" << endl;
-        cerr << "[FAILED] Injection failed!" << endl;
+        cerr << "失败!" << endl;
         cerr << "========================================" << endl;
         return 1;
     }
