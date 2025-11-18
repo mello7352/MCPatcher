@@ -31,7 +31,7 @@ std::vector<int> parseHexBytes(const std::string& hexStr, bool allowWildcard) {
                 bytes.push_back(-1);  // Wildcard
             }
             else {
-                std::cerr << "Error: Wildcards ?? not allowed in PATCHED section" << std::endl;
+                std::cerr << "错误：PATCHED 部分不允许使用通配符 ??" << std::endl;
                 return {};
             }
         }
@@ -39,13 +39,13 @@ std::vector<int> parseHexBytes(const std::string& hexStr, bool allowWildcard) {
             try {
                 int byte = std::stoi(token, nullptr, 16);
                 if (byte < 0 || byte > 255) {
-                    std::cerr << "Error: Invalid byte value: " << token << std::endl;
+                    std::cerr << "错误：无效的字节值(你的mc是不是下载有问题?去mcappx下载):" << token << std::endl;
                     return {};
                 }
                 bytes.push_back(byte);
             }
             catch (...) {
-                std::cerr << "Error: Cannot parse hex value: " << token << std::endl;
+                std::cerr << "错误:解析不了这个十六进制值:" << token << std::endl;
                 return {};
             }
         }
@@ -58,7 +58,7 @@ std::vector<int> parseHexBytes(const std::string& hexStr, bool allowWildcard) {
 bool readPatchFile(const std::string& patchFile, PatchData& patchData) {
     std::ifstream file(patchFile);
     if (!file.is_open()) {
-        std::cerr << "Error: Cannot open patch file: " << patchFile << std::endl;
+        std::cerr << "错误:不能打开补丁文件" << patchFile << std::endl;
         return false;
     }
 
@@ -98,14 +98,14 @@ bool readPatchFile(const std::string& patchFile, PatchData& patchData) {
     // Parse ORIGINAL (allow wildcards)
     patchData.original = parseHexBytes(originalHex, true);
     if (patchData.original.empty()) {
-        std::cerr << "Error: Cannot parse ORIGINAL byte sequence" << std::endl;
+        std::cerr << "错误：无法解析原始字节序列" << std::endl;
         return false;
     }
 
     // Parse PATCHED (no wildcards)
     std::vector<int> patchedTemp = parseHexBytes(patchedHex, false);
     if (patchedTemp.empty()) {
-        std::cerr << "Error: Cannot parse PATCHED byte sequence" << std::endl;
+        std::cerr << "错误：无法解析原始字节序列" << std::endl;
         return false;
     }
 
@@ -148,7 +148,7 @@ bool readBinaryFile(const std::string& filename, std::vector<uint8_t>& data) {
 bool writeBinaryFile(const std::string& filename, const std::vector<uint8_t>& data) {
     std::ofstream file(filename, std::ios::binary);
     if (!file.is_open()) {
-        std::cerr << "Error: Cannot create output file: " << filename << std::endl;
+        std::cerr << "错误:糟糕,创建不了输出文件!建议使用管理员权限运行:" << filename << std::endl;
         return false;
     }
 
@@ -187,11 +187,11 @@ bool applyPatch(std::vector<uint8_t>& data, const PatchData& patchData) {
     size_t offset = findPattern(data, patchData.original);
 
     if (offset == std::string::npos) {
-        std::cerr << "Error: Pattern not found in file" << std::endl;
+        std::cerr << "错误：文件中未找到匹配的模式" << std::endl;
         return false;
     }
 
-    std::cout << "Pattern found at offset: 0x" << std::hex << std::uppercase
+    std::cout << "在偏移处找到模式: 0x" << std::hex << std::uppercase
         << offset << std::dec << " (" << offset << ")" << std::endl;
 
     // Apply patch
@@ -209,18 +209,18 @@ bool applyPatch(std::vector<uint8_t>& data, const PatchData& patchData) {
     );
 
     if (nextOffset != std::string::npos) {
-        std::cerr << "Warning: Multiple pattern matches found, only patched the first one" << std::endl;
+        std::cerr << "警告：找到多个模式匹配，仅修补了第一个" << std::endl;
     }
 
     return true;
 }
 
 int main(int argc, char* argv[]) {
-    std::cout << "=== Binary Patcher Tool ===" << std::endl;
+    std::cout << "===二进制修补程序===" << std::endl;
 
     if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " <input_file> <patch_file> <patch_file2>  ..." << std::endl;
-        std::cerr << "Example: " << argv[0] << " Minecraft.Windows.exe patch.txt" << std::endl;
+        std::cerr << "用法: " << argv[0] << " <input_file> <patch_file> <patch_file2>  ..." << std::endl;
+        std::cerr << "示例: " << argv[0] << " Minecraft.Windows.exe patch.txt" << std::endl;
         return 1;
     }
 
@@ -235,7 +235,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<uint8_t> data;
     if (!readBinaryFile(inputFile, data)) {
-		std::cerr << "Failed to read input file: " << inputFile << std::endl;
+		std::cerr << "无法读取输入文件: " << inputFile << std::endl;
         return 1;
     }
 
@@ -244,10 +244,10 @@ int main(int argc, char* argv[]) {
 		std::string patchFile = argv[i];
         PatchData patchData;
         if (!readPatchFile(patchFile, patchData)) {
-			std::cerr << "Failed to read patch file: " << patchFile << std::endl;
+			std::cerr << "无法读取补丁文件: " << patchFile << std::endl;
         }
-        std::cout << "ORIGINAL pattern size: " << patchData.original.size() << " bytes" << std::endl;
-        std::cout << "PATCHED data size: " << patchData.patched.size() << " bytes" << std::endl;
+        std::cout << "原始尺寸: " << patchData.original.size() << " bytes" << std::endl;
+        std::cout << "补丁尺寸: " << patchData.patched.size() << " bytes" << std::endl;
         if (!applyPatch(data, patchData)) {
 			std::cerr << "Failed to apply patch from file: " << patchFile << std::endl;
         }
@@ -256,7 +256,7 @@ int main(int argc, char* argv[]) {
     if (!writeBinaryFile(outputFile, data)) {
         return 1;
     }
-    std::cout << "Patching successful! Output file: " << outputFile << std::endl;
+    std::cout << "修补成功!输出文件: " << outputFile << std::endl;
 
     return 0;
 }
